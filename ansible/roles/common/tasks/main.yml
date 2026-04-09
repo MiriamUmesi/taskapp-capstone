@@ -1,0 +1,68 @@
+---
+# Update and patch the OS
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: true
+
+- name: Upgrade all packages
+  apt:
+    upgrade: safe
+  become: true
+
+# Time synchronization
+- name: Install chrony
+  apt:
+    name: chrony
+    state: present
+  become: true
+
+- name: Enable and start chrony
+  systemd:
+    name: chrony
+    enabled: yes
+    state: started
+  become: true
+
+# Log rotation
+- name: Configure log rotation
+  copy:
+    dest: /etc/logrotate.d/taskapp
+    content: |
+      /var/log/*.log {
+        size {{ log_max_size }}
+        rotate {{ log_max_files }}
+        compress
+        missingok
+        notifempty
+      }
+  become: true
+
+# Docker daemon optimization
+- name: Configure Docker daemon
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "{{ log_max_size }}",
+          "max-file": "{{ log_max_files }}"
+        },
+        "storage-driver": "overlay2"
+      }
+  become: true
+  notify: restart docker
+
+# Disable unused services
+- name: Disable unnecessary services
+  systemd:
+    name: "{{ item }}"
+    enabled: no
+    state: stopped
+  become: true
+  ignore_errors: yes
+  loop:
+    - apport
+    - whoopsie

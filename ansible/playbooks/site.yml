@@ -1,0 +1,6 @@
+---
+- name: Harden all cluster nodes
+  hosts: private_nodes
+  gather_facts: yes
+  roles:
+    - common

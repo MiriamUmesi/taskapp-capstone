@@ -1,0 +1,16 @@
+all:
+  children:
+    private_nodes:
+      hosts:
+        master-1:
+          ansible_host: 10.0.4.10
+        master-2:
+          ansible_host: 10.0.5.10
+        master-3:
+          ansible_host: 10.0.6.10
+        worker-1:
+          ansible_host: 10.0.4.11
+        worker-2:
+          ansible_host: 10.0.5.11
+        worker-3:
+          ansible_host: 10.0.6.11
