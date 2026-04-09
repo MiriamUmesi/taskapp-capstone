@@ -18,3 +18,5 @@ kops/secrets/
 
 # OS
 .DS_Store
+task.md
+terraform.tfvars
