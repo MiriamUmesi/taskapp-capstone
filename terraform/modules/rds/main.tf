@@ -1,4 +1,3 @@
-# Subnet group — tells RDS which subnets it can place instances in
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project_name}-db-subnet-group"
   subnet_ids = var.private_subnet_ids
@@ -9,13 +8,11 @@ resource "aws_db_subnet_group" "main" {
   }
 }
 
-# Security group — controls who can connect to the database
 resource "aws_security_group" "rds" {
   name        = "${var.project_name}-rds-sg"
   description = "Security group for RDS PostgreSQL"
   vpc_id      = var.vpc_id
 
-  # Only allow PostgreSQL port from within the VPC
   ingress {
     from_port   = 5432
     to_port     = 5432
@@ -36,15 +33,14 @@ resource "aws_security_group" "rds" {
   }
 }
 
-# The RDS instance itself
 resource "aws_db_instance" "main" {
   identifier        = "${var.project_name}-postgres"
   engine            = "postgres"
-  engine_version    = "15.4"
+  engine_version    = "15.7"
   instance_class    = var.instance_class
   allocated_storage = 20
-  storage_type      = "gp3"
-  storage_encrypted = true
+  storage_type      = "gp2"
+  storage_encrypted = falsep
 
   db_name  = var.db_name
   username = var.db_username
@@ -53,19 +49,9 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  # Automated backups — keeps 7 days of backups
-  backup_retention_period = 7
-  backup_window           = "03:00-04:00"
-
-  # Maintenance window
-  maintenance_window = "Mon:04:00-Mon:05:00"
-
-  # Don't create a final snapshot when destroying
-  # Set to true in real production
-  skip_final_snapshot = true
-
-  # Multi-AZ for high availability
-  multi_az = true
+  backup_retention_period = 0
+  skip_final_snapshot     = true
+  multi_az                = false
 
   tags = {
     Name        = "${var.project_name}-postgres"

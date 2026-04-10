@@ -8,7 +8,7 @@ spec:
   channel: stable
   configBase: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local
   dnsType: gossip
-  networkID: vpc-xxxxxxxxxxxxxxxxx
+  networkID: vpc-039c8217b3e046442
   networking:
     calico: {}
   topology:
@@ -22,27 +22,27 @@ spec:
   - name: us-east-1a
     type: Private
     zone: us-east-1a
-    id: subnet-xxxxxxxxxxxxxxxxa
+    id: subnet-0b536e78469c7c02b
   - name: us-east-1b
     type: Private
     zone: us-east-1b
-    id: subnet-xxxxxxxxxxxxxxxxb
+    id: subnet-097c007897b237e17
   - name: us-east-1c
     type: Private
     zone: us-east-1c
-    id: subnet-xxxxxxxxxxxxxxxxc
+    id: subnet-05196dd9a77d932b8
   - name: utility-us-east-1a
     type: Utility
     zone: us-east-1a
-    id: subnet-xxxxxxxxxxxxxxxxd
+    id: subnet-0e3bcd27861ee737e
   - name: utility-us-east-1b
     type: Utility
     zone: us-east-1b
-    id: subnet-xxxxxxxxxxxxxxxxe
+    id: subnet-0166cfa46e09374b2
   - name: utility-us-east-1c
     type: Utility
     zone: us-east-1c
-    id: subnet-xxxxxxxxxxxxxxxxf
+    id: subnet-0fe5b55de902198b9
   etcdClusters:
   - name: main
     etcdMembers:
