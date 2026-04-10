@@ -11,11 +11,11 @@ metadata:
 spec:
   tls:
   - hosts:
-    - taskapp.enzoputachi.com
-    - api.enzoputachi.com
+    - taskapp.enzoputachi.site
+    - api.enzoputachi.site
     secretName: taskapp-tls
   rules:
-  - host: taskapp.enzoputachi.com
+  - host: taskapp.enzoputachi.site
     http:
       paths:
       - path: /
@@ -25,7 +25,7 @@ spec:
             name: frontend
             port:
               number: 80
-  - host: api.enzoputachi.com
+  - host: api.enzoputachi.site
     http:
       paths:
       - path: /
