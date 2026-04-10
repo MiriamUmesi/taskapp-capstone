@@ -1,0 +1,151 @@
+apiVersion: kops.k8s.io/v1alpha2
+kind: Cluster
+metadata:
+  name: taskapp.k8s.local
+spec:
+  kubernetesVersion: 1.28.0
+  cloudProvider: aws
+  channel: stable
+  configBase: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local
+  dnsType: gossip
+  networkID: vpc-xxxxxxxxxxxxxxxxx
+  networking:
+    calico: {}
+  topology:
+    masters: private
+    nodes: private
+    bastion:
+      bastionPublicName: bastion.taskapp.k8s.local
+    dns:
+      type: Private
+  subnets:
+  - name: us-east-1a
+    type: Private
+    zone: us-east-1a
+    id: subnet-xxxxxxxxxxxxxxxxa
+  - name: us-east-1b
+    type: Private
+    zone: us-east-1b
+    id: subnet-xxxxxxxxxxxxxxxxb
+  - name: us-east-1c
+    type: Private
+    zone: us-east-1c
+    id: subnet-xxxxxxxxxxxxxxxxc
+  - name: utility-us-east-1a
+    type: Utility
+    zone: us-east-1a
+    id: subnet-xxxxxxxxxxxxxxxxd
+  - name: utility-us-east-1b
+    type: Utility
+    zone: us-east-1b
+    id: subnet-xxxxxxxxxxxxxxxxe
+  - name: utility-us-east-1c
+    type: Utility
+    zone: us-east-1c
+    id: subnet-xxxxxxxxxxxxxxxxf
+  etcdClusters:
+  - name: main
+    etcdMembers:
+    - instanceGroup: control-plane-us-east-1a
+      name: a
+    - instanceGroup: control-plane-us-east-1b
+      name: b
+    - instanceGroup: control-plane-us-east-1c
+      name: c
+    backups:
+      backupStore: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local/backups/etcd/main
+  - name: events
+    etcdMembers:
+    - instanceGroup: control-plane-us-east-1a
+      name: a
+    - instanceGroup: control-plane-us-east-1b
+      name: b
+    - instanceGroup: control-plane-us-east-1c
+      name: c
+    backups:
+      backupStore: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local/backups/etcd/events
+  masterPublicName: api.taskapp.k8s.local
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-us-east-1a
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Master
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1a
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-us-east-1b
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Master
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1b
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: control-plane-us-east-1c
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Master
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1c
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: nodes-us-east-1a
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Node
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1a
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: nodes-us-east-1b
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Node
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1b
+---
+apiVersion: kops.k8s.io/v1alpha2
+kind: InstanceGroup
+metadata:
+  name: nodes-us-east-1c
+  labels:
+    kops.k8s.io/cluster: taskapp.k8s.local
+spec:
+  role: Node
+  machineType: t3.micro
+  minSize: 1
+  maxSize: 1
+  subnets:
+  - us-east-1c

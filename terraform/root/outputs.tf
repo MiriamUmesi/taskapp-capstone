@@ -18,3 +18,11 @@ output "kops_secret_access_key" {
   value     = module.iam.kops_secret_access_key
   sensitive = true
 }
+
+output "nameservers" {
+  value = module.dns.nameservers
+}
+
+output "db_endpoint" {
+  value = module.rds.db_endpoint
+}

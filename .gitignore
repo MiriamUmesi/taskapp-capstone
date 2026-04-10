@@ -20,3 +20,4 @@ kops/secrets/
 .DS_Store
 task.md
 terraform.tfvars
+*.zip
