@@ -21,3 +21,4 @@ kops/secrets/
 task.md
 terraform.tfvars
 *.zip
+k8s/secrets.yaml
