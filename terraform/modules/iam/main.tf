@@ -25,3 +25,13 @@ resource "aws_iam_user_policy_attachment" "kops_policies" {
   user       = aws_iam_user.kops.name
   policy_arn = each.value
 }
+
+resource "aws_iam_user_policy_attachment" "kops_extra_policies" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
+    "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+  ])
+
+  user       = aws_iam_user.kops.name
+  policy_arn = each.value
+}

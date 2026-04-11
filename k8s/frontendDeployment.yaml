@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: your-dockerhub-username/taskapp-frontend:1.0.0
+        image: enzoputachi/taskapp-frontend:1.0.0
         ports:
         - containerPort: 80
         resources:

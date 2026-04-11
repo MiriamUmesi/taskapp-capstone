@@ -40,7 +40,7 @@ resource "aws_db_instance" "main" {
   instance_class    = var.instance_class
   allocated_storage = 20
   storage_type      = "gp2"
-  storage_encrypted = falsep
+  storage_encrypted = false
 
   db_name  = var.db_name
   username = var.db_username
