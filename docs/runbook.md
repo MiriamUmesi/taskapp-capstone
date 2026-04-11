@@ -33,6 +33,16 @@ kops validate cluster --wait 20m
 kubectl apply -f k8s/
 ```
 
+6. Install cert-manager and configure SSL:
+```bash
+./scripts/install-cert-manager.sh
+```
+
+7. Run database migrations:
+```bash
+./scripts/run-migrations.sh
+```
+
 ---
 
 ## Scaling the Cluster
@@ -47,8 +57,8 @@ kops rolling-update cluster --name=${CLUSTER_NAME} --yes
 
 ### Scale a specific deployment
 ```bash
-kubectl scale deployment frontend --replicas=3
-kubectl scale deployment backend --replicas=3
+kubectl scale deployment frontend --replicas=3 -n taskapp
+kubectl scale deployment backend --replicas=3 -n taskapp
 ```
 
 ---
@@ -70,7 +80,7 @@ kubectl create secret generic db-credentials \
 ```
 4. Restart the backend to pick up the new password:
 ```bash
-kubectl rollout restart deployment/backend
+kubectl rollout restart deployment/backend -n taskapp
 ```
 
 ### Rotate Kops AWS credentials
@@ -104,7 +114,7 @@ kops validate cluster --name=${CLUSTER_NAME}
 ### Pod stuck in Pending state
 ```bash
 # Describe the pod to see events
-kubectl describe pod <pod-name>
+kubectl describe pod <pod-name> -n taskapp
 
 # Check if nodes have enough resources
 kubectl describe nodes
@@ -118,7 +128,7 @@ aws rds describe-db-instances \
   --query "DBInstances[0].DBInstanceStatus"
 
 # Check backend logs
-kubectl logs deployment/backend
+kubectl logs deployment/backend -n taskapp
 ```
 
 ### NAT Gateway failure
@@ -140,6 +150,30 @@ sudo systemctl status kubelet
 sudo journalctl -u kubelet -n 50
 ```
 
+### Frontend API calls failing
+```bash
+# Rebuild frontend with correct API URL
+./scripts/build-push.sh
+
+# Update deployment
+kubectl set image deployment/frontend \
+  frontend=enzoputachi/taskapp-frontend:1.0.2 -n taskapp
+
+kubectl rollout status deployment/frontend -n taskapp
+```
+
+### SSL certificate not ready
+```bash
+# Check certificate status
+kubectl get certificate -n taskapp
+
+# Check challenges
+kubectl get challenges -n taskapp
+
+# Describe for details
+kubectl describe certificate taskapp-tls -n taskapp
+```
+
 ---
 
 ## Destroying the Infrastructure
@@ -154,9 +188,6 @@ This deletes in the correct order:
 
 Note: S3 buckets and DynamoDB table are preserved for reuse.
 To delete them permanently, see comments inside `cleanup.sh`.
-
-
-Nothing updates automatically. Here is the exact workflow every time you rebuild:
 
 ---
 
@@ -205,6 +236,8 @@ kops validate cluster --wait 20m
 ### Step 4 — Redeploy application
 ```bash
 kubectl apply -f k8s/
+./scripts/install-cert-manager.sh
+./scripts/run-migrations.sh
 ```
 
 ---
@@ -220,21 +253,35 @@ kubectl apply -f k8s/
 
 ---
 
-## RUN SCRIPT TO BUILD AND PUSH DOCKER IMAGE
+## Building and Pushing Docker Images
+
+### Using the build script
+```bash
+./scripts/build-push.sh
 ```
-~/taskapp-capstone/scripts/build-push.sh
+
+### Backend image
+```bash
+docker build -t enzoputachi/taskapp-backend:1.0.0 \
+  ~/capstone-project-novara/taskapp_backend
+docker push enzoputachi/taskapp-backend:1.0.0
 ```
 
-## After both pushes succeed, update deployment manifests with the correct image names:
+### Frontend image (VITE_API_URL required at build time)
+```bash
+cd ~/capstone-project-novara/taskapp_frontend
+docker build --no-cache \
+  --build-arg VITE_API_URL=https://api.enzoputachi.site/api \
+  -t enzoputachi/taskapp-frontend:1.0.2 .
+docker push enzoputachi/taskapp-frontend:1.0.2
+```
 
-**In backendDeployment.yaml**
+The `VITE_API_URL` build arg is required — without it the frontend
+will default to localhost and API calls will fail in production.
 
-replace: `yamlimage: your-dockerhub-username/taskapp-backend:1.0.0`
+---
 
-with: `yamlimage: enzoputachi/taskapp-backend:1.0.0`
-
-**In frontendDeployment.yaml**
-
-replace: `yamlimage: your-dockerhub-username/taskapp-frontend:1.0.0`
-
-with: `yamlimage: enzoputachi/taskapp-frontend:1.0.0`
+## Live URLs
+- Frontend: https://taskapp.enzoputachi.site
+- Backend API: https://api.enzoputachi.site/api
+- Health check: https://api.enzoputachi.site/api/health
