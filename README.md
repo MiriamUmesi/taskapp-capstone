@@ -67,8 +67,8 @@ kubectl apply -f k8s/
 ```
 
 ## Live URLs
-- Frontend: https://taskapp.yourdomain.com
-- Backend API: https://api.yourdomain.com
+- Frontend: https://taskapp.enzoputachi.site
+- Backend API: https://api.enzoputachi.site
 
 ## Documentation
 - [Architecture](docs/architecture.md)
