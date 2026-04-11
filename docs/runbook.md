@@ -1,53 +1,151 @@
 # Operational Runbook
 
-## Deploying the Application
+## Live URLs
+- Frontend: https://taskapp.enzoputachi.site
+- Backend API: https://api.enzoputachi.site/api
+- Health check: https://api.enzoputachi.site/api/health
 
-### Full deployment from scratch
+---
 
-1. Bootstrap remote state:
+## Full Deployment From Scratch
+
+### Step 1 — Bootstrap remote state
 ```bash
 ./scripts/terraform-setup.sh
 ```
 
-2. Bootstrap Kops state:
+### Step 2 — Bootstrap Kops state
 ```bash
 ./scripts/kops-setup.sh
 ```
 
-3. Build AWS infrastructure:
+### Step 3 — Build AWS infrastructure
 ```bash
-cd terraform/root
+cd ~/taskapp-capstone/terraform/root
 terraform init
 terraform apply
 ```
 
-4. Build Kubernetes cluster:
+### Step 4 — Create and validate cluster
 ```bash
-kops create -f kops/cluster-config.yaml
-kops update cluster --name=${CLUSTER_NAME} --yes
-kops validate cluster --wait 20m
+./scripts/kops-start.sh
+```
+This script:
+- Sets Kops AWS credentials
+- Creates a 3-master, 3-worker cluster across 3 AZs
+- Updates and validates the cluster
+- Waits up to 20 minutes for the cluster to be ready
+
+### Step 5 — Deploy application, ingress, and cert-manager
+```bash
+./scripts/kubernetes.sh
+```
+This script:
+- Installs NGINX ingress controller
+- Installs cert-manager and waits for it to be ready
+- Deploys namespace, secrets, cluster issuer
+- Deploys backend, frontend, and ingress
+
+### Step 6 — Run database migrations
+```bash
+./scripts/run-migrations.sh
 ```
 
-5. Deploy application:
+### Step 7 — Build and push Docker images (if needed)
 ```bash
-kubectl apply -f k8s/
+./scripts/build-push.sh
 ```
 
-6. Install cert-manager and configure SSL:
+---
+
+## Every Rebuild Workflow
+
+### Step 1 — Rebuild infrastructure
 ```bash
-./scripts/install-cert-manager.sh
+cd ~/taskapp-capstone/terraform/root
+terraform apply
 ```
 
-7. Run database migrations:
+### Step 2 — Get new values and replace them
+
+**VPC and subnet IDs in `kops/cluster-config.yaml`:**
+```bash
+terraform output vpc_id
+terraform output private_subnet_ids
+terraform output public_subnet_ids
+```
+Manually replace in `kops/cluster-config.yaml`
+
+**RDS endpoint in `k8s/secrets.yaml`:**
+```bash
+terraform output db_endpoint
+```
+Manually replace `DB_HOST` and `DATABASE_URL` in `k8s/secrets.yaml`
+
+**Kops credentials:**
+```bash
+terraform output kops_access_key_id
+terraform output -raw kops_secret_access_key
+```
+
+### Step 3 — Recreate cluster
+```bash
+./scripts/kops-start.sh
+```
+
+### Step 4 — Redeploy application
+```bash
+./scripts/kubernetes.sh
+```
+
+### Step 5 — Run database migrations
 ```bash
 ./scripts/run-migrations.sh
 ```
 
 ---
 
+## What Never Changes
+- S3 bucket names
+- DynamoDB table name
+- Domain name
+- Docker images
+- `CLUSTER_NAME`
+- `KOPS_STATE_STORE`
+- Database password
+
+---
+
+## Building and Pushing Docker Images
+
+### Using the build script
+```bash
+./scripts/build-push.sh
+```
+
+### Backend image (manual)
+```bash
+docker build -t enzoputachi/taskapp-backend:1.0.0 \
+  ~/capstone-project-novara/taskapp_backend
+docker push enzoputachi/taskapp-backend:1.0.0
+```
+
+### Frontend image (manual — VITE_API_URL required at build time)
+```bash
+cd ~/capstone-project-novara/taskapp_frontend
+docker build --no-cache \
+  --build-arg VITE_API_URL=https://api.enzoputachi.site/api \
+  -t enzoputachi/taskapp-frontend:1.0.2 .
+docker push enzoputachi/taskapp-frontend:1.0.2
+```
+The `VITE_API_URL` build arg is required — without it the frontend
+will default to localhost and API calls will fail in production.
+
+---
+
 ## Scaling the Cluster
 
-### Scale worker nodes up
+### Scale worker nodes
 ```bash
 kops edit instancegroup nodes-us-east-1a --name=${CLUSTER_NAME}
 # Change maxSize and minSize to desired count
@@ -101,39 +199,28 @@ export AWS_SECRET_ACCESS_KEY=$(terraform output -raw kops_secret_access_key)
 
 ### Cluster fails to validate
 ```bash
-# Check node status
 kubectl get nodes
-
-# Check system pods
 kubectl get pods -n kube-system
-
-# Check kops logs
 kops validate cluster --name=${CLUSTER_NAME}
 ```
 
 ### Pod stuck in Pending state
 ```bash
-# Describe the pod to see events
 kubectl describe pod <pod-name> -n taskapp
-
-# Check if nodes have enough resources
 kubectl describe nodes
 ```
 
 ### Database connection failure
 ```bash
-# Check RDS instance status
 aws rds describe-db-instances \
   --db-instance-identifier taskapp-postgres \
   --query "DBInstances[0].DBInstanceStatus"
 
-# Check backend logs
 kubectl logs deployment/backend -n taskapp
 ```
 
 ### NAT Gateway failure
 ```bash
-# Check NAT Gateway status
 aws ec2 describe-nat-gateways \
   --filter "Name=tag:Name,Values=taskapp-nat-*" \
   --query "NatGateways[*].[NatGatewayId,State]" \
@@ -142,35 +229,23 @@ aws ec2 describe-nat-gateways \
 
 ### Node not joining cluster
 ```bash
-# SSH through bastion
 ssh -J ubuntu@<bastion-ip> ubuntu@<node-private-ip>
-
-# Check kubelet status on node
 sudo systemctl status kubelet
 sudo journalctl -u kubelet -n 50
 ```
 
 ### Frontend API calls failing
 ```bash
-# Rebuild frontend with correct API URL
 ./scripts/build-push.sh
-
-# Update deployment
 kubectl set image deployment/frontend \
   frontend=enzoputachi/taskapp-frontend:1.0.2 -n taskapp
-
 kubectl rollout status deployment/frontend -n taskapp
 ```
 
 ### SSL certificate not ready
 ```bash
-# Check certificate status
 kubectl get certificate -n taskapp
-
-# Check challenges
 kubectl get challenges -n taskapp
-
-# Describe for details
 kubectl describe certificate taskapp-tls -n taskapp
 ```
 
@@ -188,100 +263,3 @@ This deletes in the correct order:
 
 Note: S3 buckets and DynamoDB table are preserved for reuse.
 To delete them permanently, see comments inside `cleanup.sh`.
-
----
-
-## Every Rebuild Workflow
-
-### Step 1 — Rebuild infrastructure
-```bash
-cd ~/taskapp-capstone/terraform/root
-terraform apply
-```
-
-### Step 2 — Get new values and replace them
-
-**VPC and subnet IDs in `kops/cluster-config.yaml`:**
-```bash
-terraform output vpc_id
-terraform output private_subnet_ids
-terraform output public_subnet_ids
-```
-Manually replace in `kops/cluster-config.yaml`
-
-**RDS endpoint in `k8s/secrets.yaml`:**
-```bash
-terraform output db_endpoint
-```
-Manually replace `DB_HOST` and `DATABASE_URL` in `k8s/secrets.yaml`
-
-**Kops credentials:**
-```bash
-terraform output kops_access_key_id
-terraform output -raw kops_secret_access_key
-```
-Export them:
-```bash
-export AWS_ACCESS_KEY_ID=<value>
-export AWS_SECRET_ACCESS_KEY=<value>
-```
-
-### Step 3 — Rebuild cluster
-```bash
-kops create -f kops/cluster-config.yaml
-kops update cluster --name=${CLUSTER_NAME} --yes
-kops validate cluster --wait 20m
-```
-
-### Step 4 — Redeploy application
-```bash
-kubectl apply -f k8s/
-./scripts/install-cert-manager.sh
-./scripts/run-migrations.sh
-```
-
----
-
-## What Never Changes
-- S3 bucket names
-- DynamoDB table name
-- Domain name
-- Docker images
-- `CLUSTER_NAME`
-- `KOPS_STATE_STORE`
-- Database password
-
----
-
-## Building and Pushing Docker Images
-
-### Using the build script
-```bash
-./scripts/build-push.sh
-```
-
-### Backend image
-```bash
-docker build -t enzoputachi/taskapp-backend:1.0.0 \
-  ~/capstone-project-novara/taskapp_backend
-docker push enzoputachi/taskapp-backend:1.0.0
-```
-
-### Frontend image (VITE_API_URL required at build time)
-```bash
-cd ~/capstone-project-novara/taskapp_frontend
-docker build --no-cache \
-  --build-arg VITE_API_URL=https://api.enzoputachi.site/api \
-  -t enzoputachi/taskapp-frontend:1.0.2 .
-docker push enzoputachi/taskapp-frontend:1.0.2
-```
-
-The `VITE_API_URL` build arg is required — without it the frontend
-will default to localhost and API calls will fail in production.
-
----
-
-## Live URLs
-- Frontend: https://taskapp.enzoputachi.site
-- Backend API: https://api.enzoputachi.site/api
-- Health check: https://api.enzoputachi.site/api/health
