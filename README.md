@@ -70,6 +70,9 @@ kubectl apply -f k8s/
 - Frontend: https://taskapp.enzoputachi.site
 - Backend API: https://api.enzoputachi.site
 
+## Demo Link
+- https://drive.google.com/file/d/1qyHo-RV9EUSUsvw63_M_kjHHTdJT78oZ/view?usp=sharing
+
 ## Documentation
 - [Architecture](docs/architecture.md)
 - [Runbook](docs/runbook.md)
