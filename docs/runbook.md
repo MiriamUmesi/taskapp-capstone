@@ -1,9 +1,9 @@
 # Operational Runbook
 
 ## Live URLs
-- Frontend: https://taskapp.enzoputachi.site
-- Backend API: https://api.enzoputachi.site/api
-- Health check: https://api.enzoputachi.site/api/health
+- Frontend: https://taskapp.miriamrejoiceumesi.online
+- Backend API: https://api.miriamrejoiceumesi.online/api
+- Health check: https://api.miriamrejoiceumesi.online/api/health
 
 ---
 
@@ -125,18 +125,18 @@ terraform output -raw kops_secret_access_key
 
 ### Backend image (manual)
 ```bash
-docker build -t enzoputachi/taskapp-backend:1.0.0 \
+docker build -t miriamumesi/taskapp-backend:1.0.0 \
   ~/capstone-project-novara/taskapp_backend
-docker push enzoputachi/taskapp-backend:1.0.0
+docker push miriamumesi/taskapp-backend:1.0.0
 ```
 
 ### Frontend image (manual — VITE_API_URL required at build time)
 ```bash
 cd ~/capstone-project-novara/taskapp_frontend
 docker build --no-cache \
-  --build-arg VITE_API_URL=https://api.enzoputachi.site/api \
-  -t enzoputachi/taskapp-frontend:1.0.2 .
-docker push enzoputachi/taskapp-frontend:1.0.2
+  --build-arg VITE_API_URL=https://api.miriamrejoiceumesi.online/api \
+  -t miriamumesi/taskapp-frontend:1.0.2 .
+docker push miriamumesi/taskapp-frontend:1.0.2
 ```
 The `VITE_API_URL` build arg is required — without it the frontend
 will default to localhost and API calls will fail in production.
@@ -238,7 +238,7 @@ sudo journalctl -u kubelet -n 50
 ```bash
 ./scripts/build-push.sh
 kubectl set image deployment/frontend \
-  frontend=enzoputachi/taskapp-frontend:1.0.2 -n taskapp
+  frontend=miriamumesi/taskapp-frontend:1.0.2 -n taskapp
 kubectl rollout status deployment/frontend -n taskapp
 ```
 

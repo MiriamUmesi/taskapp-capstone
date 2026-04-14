@@ -11,11 +11,11 @@ metadata:
 spec:
   tls:
   - hosts:
-    - taskapp.enzoputachi.site
-    - api.enzoputachi.site
+    - taskapp.miriamrejoiceumesi.online
+    - api.miriamrejoiceumesi.online
     secretName: taskapp-tls
   rules:
-  - host: taskapp.enzoputachi.site
+  - host: taskapp.miriamrejoiceumesi.online
     http:
       paths:
       - path: /
@@ -25,7 +25,7 @@ spec:
             name: frontend
             port:
               number: 80
-  - host: api.enzoputachi.site
+  - host: api.miriamrejoiceumesi.online
     http:
       paths:
       - path: /

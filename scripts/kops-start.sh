@@ -1,13 +1,18 @@
 #!/bin/bash
+source $(dirname "$0")/../config.env
 
 echo "=== Setting Kops AWS credentials ==="
-export AWS_ACCESS_KEY_ID=AKIAWDB3Z2YJ54KMLLI5
-export AWS_SECRET_ACCESS_KEY=$(cd ~/taskapp-capstone/terraform/root && terraform output -raw kops_secret_access_key)
+export AWS_ACCESS_KEY_ID=$(cd ~/taskapp-client-dobsi894/terraform/root && terraform output -raw kops_access_key_id)
+export AWS_SECRET_ACCESS_KEY=$(cd ~/taskapp-client-dobsi894/terraform/root && terraform output -raw kops_secret_access_key)
+
+VPC_ID=$(cd ~/taskapp-client-dobsi894/terraform/root && terraform output -raw vpc_id)
+PRIVATE_SUBNETS=$(cd ~/taskapp-client-dobsi894/terraform/root && terraform output -json private_subnet_ids | jq -r 'join(",")')
+PUBLIC_SUBNETS=$(cd ~/taskapp-client-dobsi894/terraform/root && terraform output -json public_subnet_ids | jq -r 'join(",")')
 
 echo "=== Creating Kops cluster ==="
 kops create cluster \
-  --name=taskapp.k8s.local \
-  --state=s3://taskapp-kops-state-418884736531 \
+  --name=${CLUSTER_NAME} \
+  --state=${KOPS_STATE_STORE} \
   --cloud=aws \
   --control-plane-count=3 \
   --control-plane-size=t3.medium \
@@ -18,23 +23,23 @@ kops create cluster \
   --networking=calico \
   --topology=private \
   --bastion \
-  --network-id=vpc-039c8217b3e046442 \
-  --subnets=subnet-0b536e78469c7c02b,subnet-097c007897b237e17,subnet-05196dd9a77d932b8 \
-  --utility-subnets=subnet-0e3bcd27861ee737e,subnet-0166cfa46e09374b2,subnet-0fe5b55de902198b9 \
+  --network-id=vpc-087a075fd83d6b979 \
+  --subnets=subnet-0380fbdaf66d5186d,subnet-0f30f19f1d8b11e3e,subnet-0d10cb7963cb0845d \
+  --utility-subnets=subnet-03ed2302798b4715b,subnet-07134ccddc01f162d,subnet-010348748b277184f \
   --ssh-public-key=~/.ssh/taskapp-kops.pub \
   --kubernetes-version=1.31.0 \
   --yes
 
 echo "=== Updating cluster ==="
 kops update cluster \
-  --name=taskapp.k8s.local \
-  --state=s3://taskapp-kops-state-418884736531 \
+  --name=${CLUSTER_NAME} \
+  --state=${KOPS_STATE_STORE} \
   --yes --admin
 
 echo "=== Validating cluster ==="
 kops validate cluster \
-  --name=taskapp.k8s.local \
-  --state=s3://taskapp-kops-state-418884736531 \
+  --name=${CLUSTER_NAME} \
+  --state=${KOPS_STATE_STORE} \
   --wait 20m
 
 echo "=== Cluster is ready ==="

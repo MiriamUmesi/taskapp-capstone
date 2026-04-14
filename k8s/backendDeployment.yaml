@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: enzoputachi/taskapp-backend:1.0.0
+        image: miriamumesi/taskapp-backend:1.0.0
         ports:
         - containerPort: 5000
         resources:

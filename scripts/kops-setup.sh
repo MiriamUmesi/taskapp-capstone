@@ -1,29 +1,25 @@
 #!/bin/bash
+source $(dirname "$0")/../config.env
 
 echo "=== Setting up Kops state store ==="
 
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-
-# Create Kops state bucket
 aws s3api create-bucket \
-  --bucket taskapp-kops-state-${ACCOUNT_ID} \
+  --bucket taskapp-kops-state-${AWS_ACCOUNT_ID} \
   --region us-east-1
 
 aws s3api put-bucket-versioning \
-  --bucket taskapp-kops-state-${ACCOUNT_ID} \
+  --bucket taskapp-kops-state-${AWS_ACCOUNT_ID} \
   --versioning-configuration Status=Enabled
 
 aws s3api put-bucket-encryption \
-  --bucket taskapp-kops-state-${ACCOUNT_ID} \
+  --bucket taskapp-kops-state-${AWS_ACCOUNT_ID} \
   --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 
-# Set environment variables permanently
-cat >> ~/.bashrc << 'BASHRC'
+cat >> ~/.bashrc << BASHRC
 
 # Kops environment variables
-export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export KOPS_STATE_STORE=s3://taskapp-kops-state-${ACCOUNT_ID}
-export CLUSTER_NAME=taskapp.k8s.local
+export KOPS_STATE_STORE=${KOPS_STATE_STORE}
+export CLUSTER_NAME=${CLUSTER_NAME}
 BASHRC
 
 source ~/.bashrc
