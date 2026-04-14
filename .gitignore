@@ -12,6 +12,7 @@
 *.key
 secrets/
 .env
+terraform/root/terraform.tfvars
 
 # Kops
 kops/secrets/

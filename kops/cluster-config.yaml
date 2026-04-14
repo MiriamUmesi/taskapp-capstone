@@ -6,7 +6,7 @@ spec:
   kubernetesVersion: 1.28.0
   cloudProvider: aws
   channel: stable
-  configBase: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local
+  configBase: s3://taskapp-kops-state- 830673477273/taskapp.k8s.local
   dnsType: gossip
   networkID: vpc-039c8217b3e046442
   networking:
@@ -53,7 +53,7 @@ spec:
     - instanceGroup: control-plane-us-east-1c
       name: c
     backups:
-      backupStore: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local/backups/etcd/main
+      backupStore: s3://taskapp-kops-state- 830673477273/taskapp.k8s.local/backups/etcd/main
   - name: events
     etcdMembers:
     - instanceGroup: control-plane-us-east-1a
@@ -63,7 +63,7 @@ spec:
     - instanceGroup: control-plane-us-east-1c
       name: c
     backups:
-      backupStore: s3://taskapp-kops-state- 418884736531/taskapp.k8s.local/backups/etcd/events
+      backupStore: s3://taskapp-kops-state- 830673477273/taskapp.k8s.local/backups/etcd/events
   masterPublicName: api.taskapp.k8s.local
 ---
 apiVersion: kops.k8s.io/v1alpha2

@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "taskapp-terraform-state-418884736531"
+    bucket         = "taskapp-terraform-state-830673477273"
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "taskapp-terraform-locks"
